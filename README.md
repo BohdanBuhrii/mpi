@@ -9,7 +9,7 @@ sudo apt-get -y install mpich
 ```
 
 ##
-run the script with 4 processors
+Run the script with 4 processors:
 ```
-mpiexec -n 4 python main.py
+mpiexec -n 4 python3 main.py
 ```
