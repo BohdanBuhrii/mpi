@@ -9,8 +9,8 @@ def tic():
 def toc(message: str):
   print(rank, message, ' '*(12 - len(message)), np.round(time.time() - tic_time, 3))
 
-N = 1000
-M = 1000
+N = 5000
+M = 5000
 
 # rank of main node
 MASTER = 0
