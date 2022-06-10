@@ -9,9 +9,8 @@ def tic():
 def toc(message: str):
   print(rank, message, ' '*(12 - len(message)), np.round(time.time() - tic_time, 3))
 
-
-N = 10000
-M = 10000
+N = 5000
+M = 5000
 MASTER = 0
 # TODO hide this shit
 DATA_FOLDER = '/mnt/c/Buhrii_B/UnivAQ/Parallel Computing/mpi/matrix_multiplication/data/'
@@ -54,13 +53,22 @@ comm.Scatterv([matrix, count, displacement, MPI.DOUBLE], submatrix, root=MASTER)
 toc('Scatterv')
 # fix dimensions
 tic()
-submatrix = submatrix.reshape((int(count[rank]/M), M))
+n = int(count[rank]/M)
+submatrix = submatrix.reshape((n, M))
 toc('Reshape')
 #print('Process {} has data:\n'.format(rank), submatrix)
 
 # compute partial result
+# tic()
+# this method is too good, I have to replace it with some shitty code
+# partial_result = np.dot(submatrix, vector)
+# toc('Dot')
+
 tic()
-partial_result = np.dot(submatrix, vector)
+partial_result = np.zeros((n, 1))
+for i in range(n):
+  for j in range(M):
+    partial_result[i] += submatrix[i][j]*vector[j]
 toc('Dot')
 
 # gather data from all processes
