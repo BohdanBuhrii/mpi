@@ -9,30 +9,31 @@ def tic():
 def toc(message: str):
   print(rank, message, ' '*(12 - len(message)), np.round(time.time() - tic_time, 3))
 
-N = 5000
-M = 5000
+N = 1000
+M = 1000
+
+# rank of main node
 MASTER = 0
-# TODO hide this shit
+
+# path to the folder with data
 DATA_FOLDER = '/mnt/c/Buhrii_B/UnivAQ/Parallel Computing/mpi/matrix_multiplication/data/'
 
 comm = MPI.COMM_WORLD
-size = MPI.COMM_WORLD.Get_size()
-rank = MPI.COMM_WORLD.Get_rank()
+nprocs = MPI.COMM_WORLD.Get_size()  # get number of processes
+rank = MPI.COMM_WORLD.Get_rank()    # get current process' id
 
-# consider moving count and displacement to master node only
-
-# count: the size of each sub-task
-ave, res = divmod(N, size)
-result_count = np.array([ave + 1 if p < res else ave for p in range(size)])
+# count: number of elements to send to each process
+ave, res = divmod(N, nprocs)
+result_count = np.array([ave + 1 if p < res else ave for p in range(nprocs)])
 count = result_count * M
 
-# displacement: the starting index of each sub-task
-result_displacement = np.array([sum(result_count[:p]) for p in range(size)])
-displacement = np.array([sum(count[:p]) for p in range(size)])
+# displacement: the starting index of each process
+result_displacement = np.array([sum(result_count[:p]) for p in range(nprocs)])
+displacement = np.array([sum(count[:p]) for p in range(nprocs)])
 
 if rank == MASTER:
-  # get the data from somewhere
   tic()
+  # load initial data from the files
   matrix = np.load(DATA_FOLDER + '{}_{}.npy'.format(N, M), allow_pickle=True)
   vector = np.load(DATA_FOLDER + '{}.npy'.format(M), allow_pickle=True)
   toc('Data loaded')
@@ -40,58 +41,43 @@ else:
   matrix = None
   vector = np.empty((M,1), dtype='d')
 
-# send vector to all nodes
+# send vector to all processes
 comm.Bcast(vector, root=0)
 
 # initialize the submatrix for all processes
-# try to do something with the shape
 submatrix = np.empty(count[rank])
 
-# distribute data between all processes
 tic()
+# distribute matrix between all processes
 comm.Scatterv([matrix, count, displacement, MPI.DOUBLE], submatrix, root=MASTER)
 toc('Scatterv')
-# fix dimensions
+
 tic()
+# fix array dimensions
 n = int(count[rank]/M)
 submatrix = submatrix.reshape((n, M))
 toc('Reshape')
-#print('Process {} has data:\n'.format(rank), submatrix)
-
-# compute partial result
-# tic()
-# this method is too good, I have to replace it with some shitty code
-# partial_result = np.dot(submatrix, vector)
-# toc('Dot')
 
 tic()
-# too slow
-# partial_result = np.zeros((n, 1))
-# for i in range(n):
-#   for j in range(M):
-#     partial_result[i] += submatrix[i][j]*vector[j]
-
-
+# multiply the submatrix by the vector
 partial_result = np.empty((n, 1))
 for i in range(n):
+  # iterate through the pairs of the elements, to avoid calling each element by index
   s = 0
   for a, b in zip(submatrix[i], vector):
     s += a * b
-  
   partial_result[i] = s
 
 toc('Multiply')
 
-# gather data from all processes
 tic()
+# gather data from all processes
 result = np.empty((N, 1))
 comm.Gatherv(partial_result, [result, result_count, result_displacement, MPI.DOUBLE], root=MASTER)
 toc('Gather')
 
-# show the result
 if rank == MASTER:
   tic()
+  # save the result
   np.save(DATA_FOLDER + '{}_{}_result'.format(N, M), result)
   toc('Save')
-  print('DONE!!!')
-
