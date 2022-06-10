@@ -65,11 +65,22 @@ toc('Reshape')
 # toc('Dot')
 
 tic()
-partial_result = np.zeros((n, 1))
+# too slow
+# partial_result = np.zeros((n, 1))
+# for i in range(n):
+#   for j in range(M):
+#     partial_result[i] += submatrix[i][j]*vector[j]
+
+
+partial_result = np.empty((n, 1))
 for i in range(n):
-  for j in range(M):
-    partial_result[i] += submatrix[i][j]*vector[j]
-toc('Dot')
+  s = 0
+  for a, b in zip(submatrix[i], vector):
+    s += a * b
+  
+  partial_result[i] = s
+
+toc('Multiply')
 
 # gather data from all processes
 tic()
