@@ -19,18 +19,20 @@ count = result_count * M
 result_displacement = np.array([sum(result_count[:p]) for p in range(size)])
 displacement = np.array([sum(count[:p]) for p in range(size)])
 
-# TODO send it to other nodes
-# vector = np.random.rand(M, 1)
-vector = np.arange(1, M + 1)
-
 if rank == MASTER:
   # get the data from somewhere
-  matrix = np.eye(N, M)
-  #print(matrix)
+  #matrix = np.ones((N, M), dtype='d')
+  matrix = np.eye(N, M, dtype='d')
+  vector = np.arange(1, M + 1, dtype='d').reshape((M, 1))
 else:
   matrix = None
+  vector = np.empty((M,1), dtype='d')
+
+# send vector to all nodes
+comm.Bcast(vector, root=0)
 
 # initialize the submatrix for all processes
+# try to do something with the shape
 submatrix = np.empty(count[rank])
 
 # distribute data between all processes
