@@ -42,7 +42,7 @@ else:
   vector = np.empty((M,1), dtype='d')
 
 # send vector to all processes
-comm.Bcast(vector, root=0)
+comm.Bcast(vector, root=MASTER)
 
 # initialize the submatrix for all processes
 submatrix = np.empty(count[rank])
