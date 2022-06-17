@@ -12,7 +12,7 @@ sudo apt-get -y install mpich
 ##
 Run the script with 4 processors:
 ```
-mpiexec -n 4 python3 main.py
+mpiexec -n 4 python3 main.py 10 10
 ```
 
 ## Useful links

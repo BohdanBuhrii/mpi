@@ -1,6 +1,7 @@
 from mpi4py import MPI
 import numpy as np
 import time
+import sys
 
 def tic():
   global tic_time
@@ -9,8 +10,8 @@ def tic():
 def toc(message: str):
   print(rank, message, ' '*(12 - len(message)), np.round(time.time() - tic_time, 3))
 
-N = 5000
-M = 5000
+N = int(sys.argv[1])
+M = int(sys.argv[2])
 
 # rank of main node
 MASTER = 0
